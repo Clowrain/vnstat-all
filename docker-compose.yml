@@ -1,0 +1,23 @@
+version: '3'
+services:
+  vnstat-echarts:
+    build: .
+    container_name: vnstat-echarts
+    restart: unless-stopped
+    # 必须使用 Host 模式以获取物理网卡流量
+    network_mode: "host"
+    environment:
+      - TZ=Asia/Shanghai
+      # ▼ 在这里修改访问端口 ▼
+      - HTTP_PORT=8899
+    ports:
+      - "8899:8899"
+    volumes:
+      # 1. 数据库持久化 (必填)
+      - ./data:/var/lib/vnstat
+      
+      # 2. 挂载核心脚本 (推荐)
+      # 这样你以后改 html 或脚本，只需重启容器，不用重建镜像
+      - ./index.html:/www/index.html
+      - ./server.py:/server.py
+      - ./balancer.sh:/balancer.sh
