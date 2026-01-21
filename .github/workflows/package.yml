@@ -1,0 +1,84 @@
+name: Build and Package FPK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: src
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Ensure multi-arch build if needed, but keeping simple for now
+          platforms: linux/amd64,linux/arm64
+
+      - name: Prepare FPK Build Directory
+        run: |
+          mkdir -p build_fpk
+          cp -r fpk/* build_fpk/
+          
+          # Replace placeholder with actual image name
+          # We use the 'latest' tag for the FPK to ensure it pulls the latest version
+          # Lowercase the image name because GHCR requires it
+          FULL_IMAGE_NAME=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" | tr '[:upper:]' '[:lower:]')
+          sed -i "s|{image}|$FULL_IMAGE_NAME|g" build_fpk/app/docker/docker-compose.yaml
+          
+          # Set proper line endings for scripts (just in case)
+          find build_fpk/cmd -type f -exec sed -i 's/\r$//' {} \;
+          chmod +x build_fpk/cmd/*
+
+      - name: Create FPK Archive
+        working-directory: build_fpk
+        run: |
+          # 1. Create app.tgz containing app/ structure
+          # The structure inside app.tgz should be: docker/, www/, etc.
+          # Our sourcedir is 'app/docker', so we want archive root to have 'docker/'
+          # tar -czf app.tgz -C app .
+          
+          cd app
+          tar -czf ../app.tgz .
+          cd ..
+          
+          # 2. Create the final .fpk
+          # It must contain: manifest, app.tgz, cmd/, icon.png
+          tar -czf vnstat-dashboard.fpk manifest app.tgz cmd icon.png
+
+      - name: Upload FPK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vnstat-dashboard-fpk
+          path: build_fpk/vnstat-dashboard.fpk

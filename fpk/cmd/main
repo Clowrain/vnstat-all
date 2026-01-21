@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Define the location of the compose file
+FILE_PATH="${TRIM_APPDEST}/docker/docker-compose.yaml"
+
+is_docker_running () {
+    # Default name if grep fails
+    DOCKER_NAME="vnstat-echarts"
+
+    # Try to extract container_name from docker-compose.yaml
+    if [ -f "$FILE_PATH" ]; then
+        # Grep for container_name: value
+        DETECTED_NAME=$(grep "container_name:" "$FILE_PATH" | awk '{print $2}' | tr -d '"' | tr -d "'")
+        if [ -n "$DETECTED_NAME" ]; then
+            DOCKER_NAME="$DETECTED_NAME"
+        fi
+    fi
+
+    echo "Checking status for container: $DOCKER_NAME"
+    
+    # Check if container is running
+    if docker inspect "$DOCKER_NAME" 2>/dev/null | grep -q "\"Status\": \"running\","; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+case $1 in
+start)
+    # App Center handles the start (docker-compose up) usually, 
+    # but strictly speaking this script is for Status check mainly.
+    # If explicit start is needed, we could add 'docker-compose -f $FILE_PATH up -d' here,
+    # but based on snltty example, it exits 0 and lets AppCenter/Docker handle it.
+    exit 0
+    ;;
+stop)
+    exit 0
+    ;;
+status)
+    if is_docker_running; then
+        exit 0
+    else
+        exit 3
+    fi
+    ;;
+*)
+    exit 1
+    ;;
+esac

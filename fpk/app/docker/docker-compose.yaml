@@ -1,0 +1,12 @@
+version: '3'
+services:
+  vnstat-echarts:
+    image: { image }
+    container_name: vnstat-echarts
+    restart: unless-stopped
+    network_mode: "host"
+    environment:
+      - TZ=Asia/Shanghai
+      - HTTP_PORT=8899
+    volumes:
+      - ./data:/var/lib/vnstat

@@ -1,0 +1,12 @@
+appname=vnstat-dashboard
+version=0.0.1
+display_name=VnStat Dashboard
+desc="""A network traffic monitor dashboard using VnStat and ECharts."""
+platform=all
+source=original
+maintainer=Oneal
+desktop_uidir=ui
+desktop_applaunchname=vnstat-dashboard
+service_port=8899
+checkport=true
+changelog=Initial release
