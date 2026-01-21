@@ -1,8 +1,8 @@
 name: Build and Package FPK
 
-on:
   push:
     branches: [ "main" ]
+    tags: [ "v*" ]
   workflow_dispatch:
 
 env:
@@ -87,4 +87,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vnstat-dashboard-fpk
-          path: build_fpk/vnstat-dashboard.fpk
+      - name: Release FPK
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build_fpk/vnstat-dashboard.fpk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
