@@ -1,7 +1,7 @@
 appname=vnstat-dashboard
 version=0.0.1
 display_name=VnStat Dashboard
-desc="""A network traffic monitor dashboard using VnStat and ECharts."""
+desc="A network traffic monitor dashboard using VnStat and ECharts."
 platform=all
 source=original
 maintainer=Oneal
