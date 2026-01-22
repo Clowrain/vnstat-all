@@ -1,5 +1,6 @@
 name: Build and Package FPK
 
+on:
   push:
     branches: [ "main" ]
     tags: [ "v*" ]
